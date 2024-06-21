@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { useState } from 'react';
 import firebase from '../firebaseConfig';
+import styles from '../styles/center.module.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -54,8 +56,9 @@ export default function Login() {
   };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className={styles.container}>
+      <img src="/assets/UrbanAg.png" alt="Urban-Ag Logo" className="logo" />
+      <h1>sign-in</h1>
       <input
         type="email"
         placeholder="Email"
@@ -70,7 +73,9 @@ export default function Login() {
       />
       <button onClick={handleLogin}>Login</button>
       <p>{message}</p>
+      <p>
+        Don't have an account? <Link href="/signup">Sign Up</Link>
+      </p>
     </div>
   );
 }
-
