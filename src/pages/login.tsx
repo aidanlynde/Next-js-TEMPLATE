@@ -11,9 +11,12 @@ export default function Login() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/token`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ username: email, password }),
+        body: new URLSearchParams({
+          username: email,
+          password: password,
+        }).toString(),
       });
 
       if (!response.ok) {
@@ -70,3 +73,4 @@ export default function Login() {
     </div>
   );
 }
+
