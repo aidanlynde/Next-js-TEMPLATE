@@ -1,14 +1,30 @@
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import firebase from '../firebaseConfig';
+import { useRouter } from 'next/router';
 import styles from '../styles/center.module.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    console.log("Checking authentication state...");
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        console.log("User is already authenticated, redirecting to profile...");
+        localStorage.setItem('userUid', user.uid);
+        router.push('/profile');
+      } else {
+        console.log("No authenticated user found.");
+      }
+    });
+  }, [router]);
 
   const handleLogin = async () => {
+    console.log("Attempting to log in...");
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/token`, {
         method: 'POST',
@@ -28,12 +44,15 @@ export default function Login() {
       const data = await response.json();
       const customToken = data.access_token;
 
+      console.log("Signing in with custom token...");
       await firebase.auth().signInWithCustomToken(customToken);
       const user = firebase.auth().currentUser;
 
       if (user) {
+        console.log("User signed in, fetching ID token...");
         const idToken = await user.getIdToken();
 
+        console.log("Fetching user profile...");
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
           method: 'GET',
           headers: {
@@ -46,11 +65,22 @@ export default function Login() {
         }
 
         const userData = await userResponse.json();
-        setMessage(`Logged in as ${userData.email}`);
+        console.log("User profile fetched:", userData);
+
+        localStorage.setItem('userUid', user.uid);
+
+        if (!userData.full_name) {
+          console.log("Profile incomplete, redirecting to profile page...");
+          router.push('/profile');
+        } else {
+          console.log("Profile complete, redirecting to dashboard...");
+          router.push('/dashboard');
+        }
       } else {
         setMessage('No user is signed in.');
       }
     } catch (error: any) {
+      console.error("Error during login process:", error);
       setMessage(`Error: ${error.message}`);
     }
   };
