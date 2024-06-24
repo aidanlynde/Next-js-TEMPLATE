@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import firebase, { firestore } from '../firebaseConfig'; // Import firestore
+import firebase from '../firebaseConfig';
 import { useRouter } from 'next/router';
 import styles from '../styles/center.module.css';
 
@@ -20,11 +20,6 @@ export default function SignUp() {
 
         // Ensure user.email is not null or undefined
         if (user.email) {
-          // Add user document to Firestore
-          await firestore.collection('users').doc(user.email).set({
-            email: user.email,
-            // Add any additional fields you need here
-          });
           setMessage('Verification email sent. Please check your inbox and then visit this page to verify: /check-verification');
 
           // Optionally, redirect to login page after sign-up
@@ -68,4 +63,6 @@ export default function SignUp() {
     </div>
   );
 }
+
+
 
