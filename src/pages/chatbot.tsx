@@ -1,43 +1,63 @@
 import { useState } from 'react';
+import axios from 'axios';
+import { useRouter } from 'next/router';
 import styles from '../styles/Chatbot.module.css';
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([{ text: "Hello! I'm your nutrition assistant. What's your name?", sender: "bot" }]);
-  const [userInput, setUserInput] = useState('');
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<{ sender: string; message: string }[]>([]);
+  const router = useRouter();
 
-  const handleSend = () => {
-    if (userInput.trim() === '') return;
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
 
-    // Add user's message to the chat
-    setMessages([...messages, { text: userInput, sender: "user" }]);
-    setUserInput('');
+    const userUid = localStorage.getItem('userUid');
+    if (!userUid) {
+      alert('User not authenticated');
+      router.push('/login');
+      return;
+    }
 
-    // Simulate bot response
-    setTimeout(() => {
-      setMessages(prevMessages => [...prevMessages, { text: `Nice to meet you, ${userInput}! How old are you?`, sender: "bot" }]);
-    }, 1000);
+    setMessages([...messages, { sender: 'user', message: input }]);
+    setInput('');
+
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
+        message: input,
+        user_id: userUid,
+      });
+
+      const botResponse = response.data.response;
+      setMessages([...messages, { sender: 'user', message: input }, { sender: 'bot', message: botResponse }]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message');
+    }
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.chatBox}>
-        {messages.map((message, index) => (
-          <div key={index} className={`${styles.message} ${styles[message.sender]}`}>
-            {message.text}
+    <div className={styles.chatContainer}>
+      <h1 className={styles.heading}>Chatbot</h1>
+      <div className={styles.messagesContainer}>
+        {messages.map((msg, index) => (
+          <div key={index} className={msg.sender === 'user' ? styles.userMessage : styles.botMessage}>
+            <p>{msg.message}</p>
           </div>
         ))}
       </div>
-      <div className={styles.inputBox}>
+      <div className={styles.inputContainer}>
         <input
           type="text"
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          placeholder="Type your message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className={styles.input}
+          placeholder="Type your message here..."
         />
-        <button onClick={handleSend}>Send</button>
+        <button onClick={handleSendMessage} className={styles.sendButton}>Send</button>
       </div>
     </div>
   );
 };
 
 export default Chatbot;
+
