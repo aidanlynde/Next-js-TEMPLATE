@@ -14,14 +14,53 @@ export default function Login() {
     console.log("Checking authentication state...");
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
-        console.log("User is already authenticated, redirecting to profile...");
+        console.log("User is already authenticated, checking profile completeness...");
         localStorage.setItem('userUid', user.uid);
-        router.push('/profile');
+        checkUserProfile(user);
       } else {
         console.log("No authenticated user found.");
       }
     });
   }, [router]);
+
+  const checkUserProfile = async (user: firebase.User | null) => {
+    if (!user) {
+      console.error("No user is authenticated.");
+      return;
+    }
+
+    try {
+      const idToken = await user.getIdToken();
+      console.log("ID Token:", idToken);
+      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error(`Error: ${userResponse.statusText}`);
+      }
+
+      const userData = await userResponse.json();
+      console.log("User profile fetched:", userData);
+
+      if (isProfileComplete(userData)) {
+        console.log("Profile complete, redirecting to chatbot...");
+        router.push('/chatbot');
+      } else {
+        console.log("Profile incomplete, redirecting to profile page...");
+        router.push('/profile');
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
+  const isProfileComplete = (profile: any) => {
+    return profile.full_name && profile.age && profile.gender && profile.height && profile.weight;
+  };
 
   const handleLogin = async () => {
     console.log("Attempting to log in...");
@@ -43,6 +82,7 @@ export default function Login() {
 
       const data = await response.json();
       const customToken = data.access_token;
+      console.log("Custom Token:", customToken);
 
       console.log("Signing in with custom token...");
       await firebase.auth().signInWithCustomToken(customToken);
@@ -51,6 +91,7 @@ export default function Login() {
       if (user) {
         console.log("User signed in, fetching ID token...");
         const idToken = await user.getIdToken();
+        console.log("ID Token:", idToken);
 
         console.log("Fetching user profile...");
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
@@ -69,12 +110,12 @@ export default function Login() {
 
         localStorage.setItem('userUid', user.uid);
 
-        if (!userData.full_name) {
+        if (isProfileComplete(userData)) {
+          console.log("Profile complete, redirecting to chatbot...");
+          router.push('/chatbot');
+        } else {
           console.log("Profile incomplete, redirecting to profile page...");
           router.push('/profile');
-        } else {
-          console.log("Profile complete, redirecting to dashboard...");
-          router.push('/dashboard');
         }
       } else {
         setMessage('No user is signed in.');
@@ -109,3 +150,4 @@ export default function Login() {
     </div>
   );
 }
+

@@ -51,7 +51,7 @@ const Profile = () => {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/save_profile`, userProfile);
       if (response.data.status === "success") {
         alert("Profile saved successfully!");
-        router.push('/dashboard'); // Redirect to dashboard or home page after successful submission
+        router.push('/chatbot'); // Redirect to chatbot after successful submission
       } else {
         console.log("Failed to save profile:", response.data);
       }
