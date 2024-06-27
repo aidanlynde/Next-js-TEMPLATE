@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import styles from '../styles/Chatbot.module.css';
@@ -7,6 +7,14 @@ const Chatbot = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ sender: string; message: string }[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    const userUid = localStorage.getItem('userUid');
+    if (!userUid) {
+      alert('User not authenticated');
+      router.push('/login');
+    }
+  }, [router]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -60,4 +68,5 @@ const Chatbot = () => {
 };
 
 export default Chatbot;
+
 
