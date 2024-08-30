@@ -1,5 +1,10 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+
+I devopsed this Next.js front end to act as a template for quickly starting a webapp using a firebase database and cloud hosted python API...
+
+
+
 ## Getting Started
 
 First, run the development server:
